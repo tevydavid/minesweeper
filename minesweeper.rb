@@ -1,11 +1,15 @@
+require 'byebug'
+
 class Tile
 
-  attr_reader :pos, :bombed, :flagged, :revealed, :neighbor_bomb_count
+  attr_reader :pos, :mined, :flagged, :revealed, :neighbor_mines
 
-  def initialize(board, pos, bombed = false)
+  attr_accessor :mined
+
+  def initialize(board, pos)
     @board = board
     @pos = pos
-    @bombed = bombed
+    @mined = false
     @flagged = false
     @revealed = false
   end
@@ -20,7 +24,7 @@ class Tile
 
 
   def inspect
-    "bombed? :#{@bombed}, flagged: #{@flagged}, revealed: #{@revealed}, neighbor_bomb_count: #{@neighbor_bomb_count}"
+    "mined? :#{@mined}, flagged: #{@flagged}, revealed: #{@revealed}, neighbor_mines: #{@neighbor_mines}"
   end
 
   def neighbors
@@ -41,30 +45,68 @@ class Tile
 
 
 
-  def neighbor_bomb_count
-    @neighbor_bomb_count = 0
+  def count_neighbor_mines
+    @neighbor_mines = 0
     self.neighbors.each do |neighbor_tile|
-      @neighbor_bomb_count += 1 if neighbor_tile.bombed?
+      @neighbor_mines += 1 if neighbor_tile.mined
     end
-    return @neighbor_bomb_count
+    return @neighbor_mines
   end
 
 
 end
 
 class Board
-  attr_reader :board
+  attr_reader :grid
 
   def initialize
+    @grid = Array.new(9) {Array.new(9)}
+    self.populate!
 
+  end
 
-        #call each tile.neighbors
+  def populate!(n = 10)
+    debugger
+    @grid.each_with_index do |row, row_num|
+      row.each_index do |col_num|
+        @grid[row_num][col_num] = Tile.new(self, [row_num, col_num])
+      end
+    end
+    bury_mines!(n)
+    meet_the_neighbors
+  end
+
+  def meet_the_neighbors
+    @grid.each do |row|
+      row.each do |tile|
+        tile.count_neighbor_mines
+      end
+    end
+  end
+
+  def bury_mines!(n = 10)
+    mines = 0
+    until mines == n
+      tile = @grid.sample.sample
+      unless tile.mined
+        tile.mined = true
+        mines +=1
+      end
+    end
+  end
+
+  def [](pos)
+    row, col = pos
+    @grid[row][col]
+
   end
 
 end
 
 class Game
-  def initiali
+  attr_reader :board
+  def initialize
+    @board = Board.new
 
   end
 
@@ -84,5 +126,9 @@ end
 
 if $PROGRAM_NAME == __FILE__
   game = Game.new
-  game.play
+  game.board.grid.each do |row|
+  #   row.each do |tile|
+  #     puts "pos: #{tile.pos}, mined?: #{tile.mined} count_neighbor_mines: #{tile.count_neighbor_mines}"
+  #   end
+  # end
 end
