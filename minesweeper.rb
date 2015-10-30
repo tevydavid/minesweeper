@@ -15,10 +15,10 @@ class Tile
   end
 
   def reveal!
-    return if @revealed = true
+    return if @revealed == true || flagged == true
     @revealed = true
     return if @neighbor_mines > 0
-    self.neighors.each {|tile| tile.reveal!}
+    self.neighbors.each {|tile| tile.reveal!}
   end
 
   def flag!
@@ -69,7 +69,6 @@ class Board
   end
 
   def populate!(n = 10)
-    debugger
     @grid.each_with_index do |row, row_num|
       row.each_index do |col_num|
         @grid[row_num][col_num] = Tile.new(self, [row_num, col_num])
@@ -129,9 +128,20 @@ end
 
 if $PROGRAM_NAME == __FILE__
   game = Game.new
-  # game.board.grid.each do |row|
-  #   row.each do |tile|
-  #     puts "pos: #{tile.pos}, mined?: #{tile.mined} count_neighbor_mines: #{tile.count_neighbor_mines}"
-  #   end
-  # end
+  game.board.grid.each do |row|
+    row.each do |tile|
+      puts "pos: #{tile.pos}, mined?: #{tile.mined} count_neighbor_mines: #{tile.count_neighbor_mines} revealed: #{tile.revealed}"
+    end
+  end
+
+  game.board.grid[2][2].reveal!
+puts "new board:"
+  game.board.grid.each do |row|
+    row.each do |tile|
+      puts "pos: #{tile.pos}, mined?: #{tile.mined} count_neighbor_mines: #{tile.count_neighbor_mines} revealed: #{tile.revealed}"
+    end
+  end
+
+
+
 end
