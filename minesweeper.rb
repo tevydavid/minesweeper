@@ -15,7 +15,7 @@ class Tile
   end
 
   def reveal!
-    return if @revealed == true || flagged == true
+    return if @revealed || @flagged
     @revealed = true
     return if @neighbor_mines > 0
     self.neighbors.each {|tile| tile.reveal!}
@@ -46,8 +46,6 @@ class Tile
     position[0].between?(0, 8) && position[1].between?(0, 8)
   end
 
-
-
   def count_neighbor_mines
     @neighbor_mines = 0
     self.neighbors.each do |neighbor_tile|
@@ -56,6 +54,17 @@ class Tile
     return @neighbor_mines
   end
 
+  def to_s
+    if revealed && neighbor_mines < 1
+      "_"
+    elsif revealed
+      "#{neighbor_mines}"
+    elsif flagged
+      "f"
+    else
+      "*"
+    end
+  end
 
 end
 
@@ -65,8 +74,13 @@ class Board
   def initialize
     @grid = Array.new(9) {Array.new(9)}
     self.populate!
+  end
+
+  def render
 
   end
+
+
 
   def populate!(n = 10)
     @grid.each_with_index do |row, row_num|
@@ -113,34 +127,61 @@ class Game
   end
 
   def play
-
+    until won?
+      display
+      take_turn
+    end
+    return "You survived!"
   end
 
   def display
-  end
-
-  def take_turn
+    board.render
   end
 
   def get_input
   end
+
+  def take_turn
+    ##input
+    over?
+    if flagged
+      puts "This spot is flagged. Are you sure you want to reveal it?"
+      ##input
+    reveal
+  end
+  end
+
+  def over?
+
+  end
+
+  def won?
+
+  end
+
+
+
 end
 
 if $PROGRAM_NAME == __FILE__
+
   game = Game.new
   game.board.grid.each do |row|
     row.each do |tile|
-      puts "pos: #{tile.pos}, mined?: #{tile.mined} count_neighbor_mines: #{tile.count_neighbor_mines} revealed: #{tile.revealed}"
+      print "[#{tile}]"
     end
+    puts
   end
 
-  game.board.grid[2][2].reveal!
-puts "new board:"
-  game.board.grid.each do |row|
-    row.each do |tile|
-      puts "pos: #{tile.pos}, mined?: #{tile.mined} count_neighbor_mines: #{tile.count_neighbor_mines} revealed: #{tile.revealed}"
-    end
-  end
+game.board.grid[2][2].reveal!
+ puts "new board:"
+ game.board.grid.each do |row|
+   row.each do |tile|
+     print "[#{tile}]"
+   end
+   puts
+ end
+
 
 
 
