@@ -30,6 +30,9 @@ class Tile
         next if row ==0 && col == 0
          possible_position = [@pos[0] + row, @pos[1] + col]
          neighbor_positions << possible_position if valid?(possible_position)
+       end
+     end
+     neighbor_positions.map {|position| @board.[](position)}
   end
 
   def valid?(position)
@@ -39,7 +42,11 @@ class Tile
 
 
   def neighbor_bomb_count
-    @neighbor_bomb_count
+    @neighbor_bomb_count = 0
+    self.neighbors.each do |neighbor_tile|
+      @neighbor_bomb_count += 1 if neighbor_tile.bombed?
+    end
+    return @neighbor_bomb_count
   end
 
 
