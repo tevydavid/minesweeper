@@ -15,7 +15,10 @@ class Tile
   end
 
   def reveal!
+    return if @revealed = true
     @revealed = true
+    return if @neighbor_mines > 0
+    self.neighors.each {|tile| tile.reveal!}
   end
 
   def flag!
@@ -126,7 +129,7 @@ end
 
 if $PROGRAM_NAME == __FILE__
   game = Game.new
-  game.board.grid.each do |row|
+  # game.board.grid.each do |row|
   #   row.each do |tile|
   #     puts "pos: #{tile.pos}, mined?: #{tile.mined} count_neighbor_mines: #{tile.count_neighbor_mines}"
   #   end
