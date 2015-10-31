@@ -1,10 +1,11 @@
 require 'byebug'
+require 'colorize'
 
 class Tile
 
-  attr_reader :pos, :mined, :flagged, :revealed, :neighbor_mines
+  attr_reader :pos, :mined, :revealed, :neighbor_mines
 
-  attr_accessor :mined
+  attr_accessor :mined, :flagged
 
   def initialize(board, pos)
     @board = board
@@ -39,7 +40,7 @@ class Tile
          neighbor_positions << possible_position if valid?(possible_position)
        end
      end
-     neighbor_positions.map {|position| @board.[](position)}
+     neighbor_positions.map {|position| @board[position]}
   end
 
   def valid?(position)
@@ -47,20 +48,23 @@ class Tile
   end
 
   def count_neighbor_mines
-    @neighbor_mines = 0
-    self.neighbors.each do |neighbor_tile|
-      @neighbor_mines += 1 if neighbor_tile.mined
-    end
-    return @neighbor_mines
+    # @neighbor_mines = 0
+    # self.neighbors.each do |neighbor_tile|
+    #   @neighbor_mines += 1 if neighbor_tile.mined
+    # end
+    # return @neighbor_mines
+    @neighbor_mines = self.neighbors.count{ |neighbor_tile| neighbor_tile.mined }
   end
 
   def to_s
-    if revealed && neighbor_mines < 1
-      "_"
+    if revealed && mined
+    "0".colorize(:red)
+    elsif revealed && neighbor_mines < 1
+      " ".colorize(:green)
     elsif revealed
-      "#{neighbor_mines}"
+      "#{neighbor_mines}".colorize (:blue)
     elsif flagged
-      "f"
+      "f".colorize (:red)
     else
       "*"
     end
@@ -77,7 +81,18 @@ class Board
   end
 
   def render
+    puts header
+    @grid.each_with_index do |row, idx|
+      print "#{idx} "
+      row.each do |tile|
+        print "[#{tile}]"
+      end
+      puts
+    end
+  end
 
+  def header
+    "   0  1  2  3  4  5  6  7  8"
   end
 
 
@@ -121,6 +136,7 @@ end
 
 class Game
   attr_reader :board
+
   def initialize
     @board = Board.new
 
@@ -130,33 +146,69 @@ class Game
     until won?
       display
       take_turn
+      if over?
+        board.grid.flatten.select(&:mined).each(&:reveal!)
+        display
+        puts "You Lose!! (a leg)".colorize(:red)
+        return
+      end
     end
-    return "You survived!"
+    board.grid.flatten.each(&:reveal!)
+    display
+    puts "You survived!"
   end
 
   def display
+    system("clear")
     board.render
   end
 
   def get_input
+    print "Enter R for reveal or F for flag >> "
+    @action = gets.chomp.upcase
+    print "Enter Row, Column >> "
+    @pos = gets.chomp.split(",").map(&:to_i)
   end
 
   def take_turn
-    ##input
-    over?
-    if flagged
+    get_input
+    tile_in_question = @board.[](@pos)
+    if @action == "F"
+      tile_in_question.flag!
+      return
+    elsif @action == "SAVE"
+      save_game
+    elsif @action == "LOAD"
+      load_game
+    elsif tile_in_question.flagged
       puts "This spot is flagged. Are you sure you want to reveal it?"
-      ##input
-    reveal
+      print "Y/N >> "
+      return if gets.chomp.upcase == "N"
+      tile_in_question.flagged = false
+    end
+    tile_in_question.reveal!
   end
+
+  def save_game
+
   end
+
+  def load_game
+
+  end
+
+
 
   def over?
-
+    @board.[](@pos).mined && @board.[](@pos).revealed
   end
 
   def won?
-
+    all_tiles = @board.grid.flatten
+    total_tiles = all_tiles.count
+    revealed_tiles = all_tiles.count(&:revealed)
+    mine_tiles = all_tiles.count(&:mined)
+    total_tiles == revealed_tiles + mine_tiles
   end
 
 
@@ -166,21 +218,22 @@ end
 if $PROGRAM_NAME == __FILE__
 
   game = Game.new
-  game.board.grid.each do |row|
-    row.each do |tile|
-      print "[#{tile}]"
-    end
-    puts
-  end
-
-game.board.grid[2][2].reveal!
- puts "new board:"
- game.board.grid.each do |row|
-   row.each do |tile|
-     print "[#{tile}]"
-   end
-   puts
- end
+  game.play
+#   game.board.grid.each do |row|
+#     row.each do |tile|
+#       print "[#{tile}]"
+#     end
+#     puts
+#   end
+#
+# game.board.grid[2][2].reveal!
+#  puts "new board:"
+#  game.board.grid.each do |row|
+#    row.each do |tile|
+#      print "[#{tile}]"
+#    end
+#    puts
+#  end
 
 
 
